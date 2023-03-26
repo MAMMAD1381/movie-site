@@ -11,6 +11,44 @@ global = {
     BASE_URL : 'https://api.themoviedb.org/3'
 }
 
+async function router(path) {
+    switch (path) {
+        case `${global.CURRENT_PATH}`:
+        case `${global.CURRENT_PATH}index.html`:
+            spinner('show')
+            addMoviesToDom((await request('/trending/movie/week')).results)
+            spinner('hide')
+            break
+
+        case `${global.CURRENT_PATH}movie-details.html`:
+            spinner('show')
+            await movieDetails(window.location.search.split('=')[1])
+            spinner('hide')
+            break
+
+        case `${global.CURRENT_PATH}search.html`:
+            spinner('show')
+            let type = window.location.search.split('=')[1].split('&')[0]
+            let term = window.location.search.split('=')[2]
+            await search(type, term)
+            console.log(type, term)
+            spinner('hide')
+            break
+
+        case `${global.CURRENT_PATH}shows.html`:
+            spinner('show');
+            addShowsToDom((await request('/tv/popular')).results)
+            spinner('hide')
+            break
+
+        case `${global.CURRENT_PATH}tv-details.html`:
+            spinner('show')
+            await showDetails(window.location.search.split('=')[1])
+            spinner('hide')
+            break
+    }
+}
+
 // highlights the navbar links (movies & tv shows) based on the current page url
 function activeSection(){
     const movies = document.querySelector('header').querySelectorAll('.nav-link')[0]
@@ -56,42 +94,7 @@ async function swiper(){
     swiperDiv.appendChild(div)
 }
 
-async function router(path) {
-    switch (path) {
-        case `${global.CURRENT_PATH}`:
-        case `${global.CURRENT_PATH}index.html`:
-            spinner('show')
-            await addPopularMoviesToDom()
-            spinner('hide')
-            break
-
-        case `${global.CURRENT_PATH}movie-details.html`:
-            spinner('show')
-            await movieDetails(window.location.search.split('=')[1])
-            spinner('hide')
-            break
-
-        case `${global.CURRENT_PATH}search.html`:
-            console.log('search')
-            break
-
-        case `${global.CURRENT_PATH}shows.html`:
-            spinner('show')
-            await addPopularShowsToDom()
-            spinner('hide')
-            break
-
-        case `${global.CURRENT_PATH}tv-details.html`:
-            spinner('show')
-            await showDetails(window.location.search.split('=')[1])
-            spinner('hide')
-            break
-    }
-}
-
-async function addPopularMoviesToDom(){
-    let response = await request('/trending/movie/week');
-    const movies = response.results
+function addMoviesToDom(movies){
     const popularMovieSection = document.getElementById('popular-movies');
     console.log(movies)
     movies.forEach((movie) => {
@@ -117,9 +120,7 @@ async function addPopularMoviesToDom(){
     })
 }
 
-async function addPopularShowsToDom(){
-    let response = await request('/tv/popular');
-    const shows = response.results
+function addShowsToDom(shows){
     const popularShowSection = document.getElementById('popular-shows');
     console.log(shows)
     shows.forEach((show) => {
@@ -145,6 +146,57 @@ async function addPopularShowsToDom(){
     })
 }
 
+function addMoviesToSearchDom(movies){
+    const popularMovieSection = document.getElementById('search-results');
+    console.log(movies)
+    movies.forEach((movie) => {
+        let movieDiv = document.createElement('div');
+        movieDiv.classList.add('card')
+        // images wouldn't load, so I used the no image thing :/
+        movieDiv.innerHTML = `
+          <a href="movie-details.html?id=${movie.id}">
+            <img
+              src = images/no-image.jpg 
+              class="card-img-top"
+              alt="Movie Title"
+            />
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${movie.title}</h5>
+            <p class="card-text">
+              <small class="text-muted">${movie.release_date}</small>
+            </p>
+          </div>
+        `
+        popularMovieSection.appendChild(movieDiv)
+    })
+}
+
+function addShowsToSearchDom(shows){
+    const popularShowSection = document.getElementById('search-results');
+    console.log(shows)
+    shows.forEach((show) => {
+        let movieDiv = document.createElement('div');
+        movieDiv.classList.add('card')
+        // images wouldn't load, so I used the no image thing :/
+        movieDiv.innerHTML = `
+          <a href="tv-details.html?id=${show.id}">
+            <img
+              src = images/no-image.jpg 
+              class="card-img-top"
+              alt="Movie Title"
+            />
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${show.name}</h5>
+            <p class="card-text">
+              <small class="text-muted">${show.first_air_date}</small>
+            </p>
+          </div>
+        `
+        popularShowSection.appendChild(movieDiv)
+    })
+}
 async function movieDetails(id){
     let movie = await request(`/movie/${id}`)
 
@@ -268,7 +320,7 @@ async function request(endpoint){
         {
             method: 'GET',
             headers:{
-                'Authorization': global.BEARER_KEY,
+                'Authorization': await global.BEARER_KEY,
                 'Content-Type': 'application/json;charset=utf-8'
             }
         });
@@ -279,6 +331,19 @@ async function request(endpoint){
 async function getKey(path){
     let request = await fetch(path)
     return await request.text()
+}
+
+// searches the in defined section(in here type) based on given term
+async function search(type, term){
+    if(type === 'movie') {
+        let response = await request(`/search/movie?api_key=${await global.KEY}&language=en-US&page=1&include_adult=false&query=${term}`)
+        addMoviesToSearchDom(response.results)
+    }
+    else if(type === 'tv') {
+        let response = await request(`/search/tv?api_key=${await global.KEY}&language=en-US&page=1&include_adult=false&query=${term}`)
+        addShowsToSearchDom(response.results)
+    }
+
 }
 
 document.addEventListener('DOMContentLoaded', init);
