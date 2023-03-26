@@ -1,13 +1,17 @@
 async function init () {
     await router(window.location.pathname)
     activeSection()
-
 }
 
+// my global variables ot path which will be needed everywhere
 global = {
-    currentPath : '/javascript-sandbox-main/11-flixx-app-project/flixx-app-mine/' //change the absolute path if needed
+    CURRENT_PATH : '/flixx-app-mine/', //TODO change the absolute path if needed
+    KEY: getKey('keys/key.txt'),
+    BEARER_KEY: getKey('keys/bearer key.txt'),
+    BASE_URL : 'https://api.themoviedb.org/3'
 }
 
+// highlights the navbar links (movies & tv shows) based on the current page url
 function activeSection(){
     const movies = document.querySelector('header').querySelectorAll('.nav-link')[0]
     const shows = document.querySelector('header').querySelectorAll('.nav-link')[1]
@@ -22,6 +26,7 @@ function activeSection(){
     }
 }
 
+// it will show up when browser is busy with fetching data
 function spinner(command){
     if (command === 'show')
         document.querySelector('.spinner').classList.add('show')
@@ -29,6 +34,7 @@ function spinner(command){
         document.querySelector('.spinner').classList.remove('show')
 }
 
+// it will show some popular movies or tv shows in swiper mode
 async function swiper(){
     let response = await request('/trending/movie/week');
     const movies = response.results
@@ -52,35 +58,37 @@ async function swiper(){
 
 async function router(path) {
     switch (path) {
-        case `${global.currentPath}`:
-        case `${global.currentPath}index.html`:
+        case `${global.CURRENT_PATH}`:
+        case `${global.CURRENT_PATH}index.html`:
             spinner('show')
             await addPopularMoviesToDom()
             spinner('hide')
             break
 
-        case `${global.currentPath}movie-details.html`:
-            let id = window.location.search.split('=')[1]
+        case `${global.CURRENT_PATH}movie-details.html`:
             spinner('show')
-            await movieDetails(id)
+            await movieDetails(window.location.search.split('=')[1])
             spinner('hide')
             break
 
-        case `${global.currentPath}search.html`:
+        case `${global.CURRENT_PATH}search.html`:
             console.log('search')
             break
 
-        case `${global.currentPath}shows.html`:
+        case `${global.CURRENT_PATH}shows.html`:
             spinner('show')
             await addPopularShowsToDom()
             spinner('hide')
             break
 
-        case `${global.currentPath}tv-details.html`:
-            console.log(window.location.search.split('=')[1])
+        case `${global.CURRENT_PATH}tv-details.html`:
+            spinner('show')
+            await showDetails(window.location.search.split('=')[1])
+            spinner('hide')
             break
     }
 }
+
 async function addPopularMoviesToDom(){
     let response = await request('/trending/movie/week');
     const movies = response.results
@@ -109,6 +117,34 @@ async function addPopularMoviesToDom(){
     })
 }
 
+async function addPopularShowsToDom(){
+    let response = await request('/tv/popular');
+    const shows = response.results
+    const popularShowSection = document.getElementById('popular-shows');
+    console.log(shows)
+    shows.forEach((show) => {
+        let movieDiv = document.createElement('div');
+        movieDiv.classList.add('card')
+        // images wouldn't load, so I used the no image thing :/
+        movieDiv.innerHTML = `
+          <a href="tv-details.html?id=${show.id}">
+            <img
+              src = images/no-image.jpg 
+              class="card-img-top"
+              alt="Movie Title"
+            />
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${show.name}</h5>
+            <p class="card-text">
+              <small class="text-muted">${show.first_air_date}</small>
+            </p>
+          </div>
+        `
+        popularShowSection.appendChild(movieDiv)
+    })
+}
+
 async function movieDetails(id){
     let movie = await request(`/movie/${id}`)
 
@@ -134,7 +170,7 @@ async function movieDetails(id){
             <img
               src="images/no-image.jpg"
               class="card-img-top"
-              alt="Movie Title"
+              alt="${movie.title}"
             />
           </div>
           <div>
@@ -164,56 +200,85 @@ async function movieDetails(id){
           ${companiesDiv.outerHTML}
         </div>
     `
-
     document.querySelector('#movie-details').innerHTML = movieDiv.innerHTML
 
 }
 
 async function showDetails(id){
+    let show = await request(`/tv/${id}`)
 
-}
-async function addPopularShowsToDom(){
-    let response = await request('/tv/popular');
-    const shows = response.results
-    const popularShowSection = document.getElementById('popular-shows');
-    console.log(shows)
-    shows.forEach((show) => {
-        let movieDiv = document.createElement('div');
-        movieDiv.classList.add('card')
-        // images wouldn't load, so I used the no image thing :/
-        movieDiv.innerHTML = `
-          <a href="movie-details.html?id=${show.id}">
-            <img
-              src = images/no-image.jpg 
-              class="card-img-top"
-              alt="Movie Title"
-            />
-          </a>
-          <div class="card-body">
-            <h5 class="card-title">${show.name}</h5>
-            <p class="card-text">
-              <small class="text-muted">${show.first_air_date}</small>
-            </p>
-          </div>
-        `
-        popularShowSection.appendChild(movieDiv)
+    let genresDiv = document.createElement('ul')
+    genresDiv.className = 'list-group'
+    show.genres.forEach((genre) => {
+        let li = document.createElement('li')
+        li.innerText = genre.name
+        genresDiv.appendChild(li)
+    });
+
+    let companiesDiv = document.createElement('div')
+    companiesDiv.className = 'list-group'
+    show.production_companies.forEach((company) => {
+        let text = document.createTextNode(`${company.name} ,`)
+        companiesDiv.appendChild(text)
     })
+
+    let showDiv = document.createElement('div')
+    showDiv.innerHTML = `
+        <div class="details-top">
+          <div>
+            <img
+              src="images/no-image.jpg"
+              class="card-img-top"
+              alt="${show.name}"
+            />
+          </div>
+          <div>
+            <h2>${show.name}</h2>
+            <p>
+              <i class="fas fa-star text-primary"></i>
+              ${Number(show.vote_average).toFixed(1)}
+            </p>
+            <p class="text-muted">Release Date: ${show.first_air_date}</p>
+            <p>
+              ${show.overview}
+            </p>
+            <h5>Genres</h5>
+            ${genresDiv.outerHTML}
+            <a href="" target="_blank" class="btn">Visit Show Homepage</a>
+          </div>
+        </div>
+        <div class="details-bottom">
+          <h2>Show Info</h2>
+          <ul>
+            <li><span class="text-secondary">Number Of Episodes:</span> ${show.number_of_episodes}</li>
+            <li>
+              <span class="text-secondary">Last Episode To Air:</span> ${show.last_episode_to_air.episode_number} </li>
+            <li><span class="text-secondary">Status:</span> ${show.status}</li>
+          </ul>
+          <h4>Production Companies</h4>
+          ${companiesDiv.outerHTML}
+        </div>
+    `
+    document.querySelector('#show-details').innerHTML = showDiv.innerHTML
 }
 
-
+// sends a request to given endpoint base on the BASE_URL(in global section) and returns the response
 async function request(endpoint){
-    const BASE_URL = 'https://api.themoviedb.org/3'
-    const BEARER_KEY = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1M2UzMWE0YzVlYjk3NjJjYTMyYTg5ODM4NjkzOTVjMiIsInN1YiI6IjY0MTcxMjFlMGQ1ZDg1' +
-        'MDA3YjY4MjhlYSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.H2QSmXDQIxeHMce0x7fbb9v3aJhSq-xRcxFvcrdBAcU'
-    let request = await fetch(`${BASE_URL}${endpoint}`,
+    let request = await fetch(`${global.BASE_URL}${endpoint}`,
         {
             method: 'GET',
             headers:{
-                'Authorization': BEARER_KEY,
+                'Authorization': global.BEARER_KEY,
                 'Content-Type': 'application/json;charset=utf-8'
             }
         });
     return  await request.json()
+}
+
+// fetches the keys from given path for authorization purposes
+async function getKey(path){
+    let request = await fetch(path)
+    return await request.text()
 }
 
 document.addEventListener('DOMContentLoaded', init);
