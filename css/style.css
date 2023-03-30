@@ -182,6 +182,19 @@ section.now-playing {
   background: url(../images/showcase-bg.jpg) no-repeat center center/cover;
 }
 
+.back-drop{
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh;
+  width: 100vw;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  opacity: 0.1;
+}
+
 section h2 {
   margin: 20px 0;
   text-align: center;

@@ -1,6 +1,3 @@
-// import '.lib/swiper'
-// import 'lib/swiper.css'
-
 async function init () {
     await router(window.location.pathname)
     activeSection()
@@ -20,8 +17,8 @@ async function router(path) {
         case `${global.CURRENT_PATH}index.html`:
             spinner('show')
             addMoviesToDom((await request('/trending/movie/week')).results)
-            spinner('hide')
             await swiperMovie()
+            spinner('hide')
             break
 
         case `${global.CURRENT_PATH}movie-details.html`:
@@ -42,8 +39,8 @@ async function router(path) {
         case `${global.CURRENT_PATH}shows.html`:
             spinner('show');
             addShowsToDom((await request('/tv/popular')).results)
-            spinner('hide')
             await swiperShow()
+            spinner('hide')
             break
 
         case `${global.CURRENT_PATH}tv-details.html`:
@@ -95,8 +92,8 @@ async function swiperMovie(){
           </div>
         `
         swiperDiv.appendChild(div)
-        readySwiper();
     })
+    readySwiper();
 }
 
 async function swiperShow(){
@@ -107,7 +104,7 @@ async function swiperShow(){
         let div = document.createElement('div')
         div.className = 'swiper-slide';
         div.innerHTML = `
-            <a href="movie-details.html?id=${show.id}">
+            <a href="tv-details.html?id=${show.id}">
               <img src="${show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : './images/no-image.jpg'}" alt="Movie Title" />
             </a>
             <h4 class="swiper-rating">
@@ -116,14 +113,31 @@ async function swiperShow(){
           </div>
         `
         swiperDiv.appendChild(div)
-        readySwiper();
     })
+    readySwiper();
 }
 
 function readySwiper(){
     let swiper = new Swiper('.swiper', {
-        speed: 400,
-        spaceBetween: 100
+        slidesPerView: 1,
+        spaceBetween: 30,
+        breakpoints:{
+            500:{
+                slidesPerView: 2
+            },
+            700:{
+                slidesPerView: 3
+            },
+            1200: {
+                slidesPerView: 4
+            }
+        }
+        ,loop: true,
+        autoplay:{
+            delay: 3000,
+            disableOnInteraction: false
+        },
+        freeMode: true
     })
 }
 
@@ -284,8 +298,13 @@ async function movieDetails(id){
           <h4>Production Companies</h4>
           ${companiesDiv.outerHTML}
         </div>
+        ${getBackDrop(movie.backdrop_path).outerHTML}
     `
-    document.querySelector('#movie-details').innerHTML = movieDiv.innerHTML
+    let movieSection = document.querySelector('#movie-details')
+    movieSection.innerHTML = movieDiv.innerHTML
+    movieSection.appendChild(getBackDrop(movie.backdrop_path))
+    console.log(getBackDrop(movie.backdrop_path))
+
 
 }
 
@@ -344,7 +363,16 @@ async function showDetails(id){
           ${companiesDiv.outerHTML}
         </div>
     `
-    document.querySelector('#show-details').innerHTML = showDiv.innerHTML
+    let showSection = document.querySelector('#show-details')
+    showSection.innerHTML = showDiv.innerHTML
+    showSection.appendChild(getBackDrop(show.backdrop_path))
+}
+
+function getBackDrop(backDropPath){
+    let backDrop = document.createElement('div');
+    backDrop.style.backgroundImage = `url(https://image.tmdb.org/t/p/original${backDropPath})`
+    backDrop.className = 'back-drop'
+    return backDrop
 }
 
 // sends a request to given endpoint base on the BASE_URL(in global section) and returns the response
