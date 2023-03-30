@@ -137,7 +137,7 @@ function addMoviesToDom(movies){
         movieDiv.innerHTML = `
           <a href="movie-details.html?id=${movie.id}">
             <img
-              src = images/no-image.jpg 
+              src = ${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : './images/no-image.jpg'}
               class="card-img-top"
               alt="Movie Title"
             />
@@ -163,7 +163,7 @@ function addShowsToDom(shows){
         movieDiv.innerHTML = `
           <a href="tv-details.html?id=${show.id}">
             <img
-              src = images/no-image.jpg 
+              src = ${show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : './images/no-image.jpg'} 
               class="card-img-top"
               alt="Movie Title"
             />
@@ -189,7 +189,7 @@ function addMoviesToSearchDom(movies){
         movieDiv.innerHTML = `
           <a href="movie-details.html?id=${movie.id}">
             <img
-              src = images/no-image.jpg 
+              src = ${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : './images/no-image.jpg'} 
               class="card-img-top"
               alt="Movie Title"
             />
@@ -215,7 +215,7 @@ function addShowsToSearchDom(shows){
         movieDiv.innerHTML = `
           <a href="tv-details.html?id=${show.id}">
             <img
-              src = images/no-image.jpg 
+              src = ${show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : './images/no-image.jpg'}
               class="card-img-top"
               alt="Movie Title"
             />
@@ -253,7 +253,7 @@ async function movieDetails(id){
         <div class="details-top">
           <div>
             <img
-              src="images/no-image.jpg"
+              src= ${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : './images/no-image.jpg'}
               class="card-img-top"
               alt="${movie.title}"
             />
@@ -312,7 +312,7 @@ async function showDetails(id){
         <div class="details-top">
           <div>
             <img
-              src="images/no-image.jpg"
+              src= ${show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : './images/no-image.jpg'}
               class="card-img-top"
               alt="${show.name}"
             />
