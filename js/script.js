@@ -1,3 +1,6 @@
+// import '.lib/swiper'
+// import 'lib/swiper.css'
+
 async function init () {
     await router(window.location.pathname)
     activeSection()
@@ -18,6 +21,7 @@ async function router(path) {
             spinner('show')
             addMoviesToDom((await request('/trending/movie/week')).results)
             spinner('hide')
+            await swiperMovie()
             break
 
         case `${global.CURRENT_PATH}movie-details.html`:
@@ -39,6 +43,7 @@ async function router(path) {
             spinner('show');
             addShowsToDom((await request('/tv/popular')).results)
             spinner('hide')
+            await swiperShow()
             break
 
         case `${global.CURRENT_PATH}tv-details.html`:
@@ -73,25 +78,53 @@ function spinner(command){
 }
 
 // it will show some popular movies or tv shows in swiper mode
-async function swiper(){
-    let response = await request('/trending/movie/week');
+async function swiperMovie(){
+    let response = await request('/movie/now_playing');
     const movies = response.results
-    console.log(movies)
-    let randomNumber = Math.floor(Math.random() * 20)
-    let selectedMovie = movies[randomNumber]
     const swiperDiv = document.querySelector('.swiper-wrapper')
-    swiperDiv.innerHTML = ''
-    let div = document.createElement('div')
-    div.className = 'swiper-slide';
-    div.innerHTML = `
-    <a href="movie-details.html?id=${selectedMovie.id}">
-              <img src="./images/no-image.jpg" alt="${selectedMovie.title}" />
+    movies.forEach(movie => {
+        let div = document.createElement('div')
+        div.className = 'swiper-slide';
+        div.innerHTML = `
+            <a href="movie-details.html?id=${movie.id}">
+              <img src="${movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : './images/no-image.jpg'}" alt="Movie Title" />
             </a>
             <h4 class="swiper-rating">
-              <i class="fas fa-star text-secondary"></i> ${randomNumber} ${selectedMovie.vote_average}
+              <i class="fas fa-star text-secondary"></i> ${movie.vote_average.toFixed(1)}
             </h4>
-    `
-    swiperDiv.appendChild(div)
+          </div>
+        `
+        swiperDiv.appendChild(div)
+        readySwiper();
+    })
+}
+
+async function swiperShow(){
+    let response = await request('/tv/top_rated');
+    const shows = response.results
+    const swiperDiv = document.querySelector('.swiper-wrapper')
+    shows.forEach(show => {
+        let div = document.createElement('div')
+        div.className = 'swiper-slide';
+        div.innerHTML = `
+            <a href="movie-details.html?id=${show.id}">
+              <img src="${show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : './images/no-image.jpg'}" alt="Movie Title" />
+            </a>
+            <h4 class="swiper-rating">
+              <i class="fas fa-star text-secondary"></i> ${show.vote_average.toFixed(1)}
+            </h4>
+          </div>
+        `
+        swiperDiv.appendChild(div)
+        readySwiper();
+    })
+}
+
+function readySwiper(){
+    let swiper = new Swiper('.swiper', {
+        speed: 400,
+        spaceBetween: 100
+    })
 }
 
 function addMoviesToDom(movies){
@@ -237,7 +270,7 @@ async function movieDetails(id){
             </p>
             <h5>Genres</h5>
             ${genresDiv.outerHTML}
-            <a href="" target="_blank" class="btn">Visit Movie Homepage</a>
+            <a href="${movie.homepage}" target="_blank" class="btn">Visit Movie Homepage</a>
           </div>
         </div>
         <div class="details-bottom">
@@ -296,7 +329,7 @@ async function showDetails(id){
             </p>
             <h5>Genres</h5>
             ${genresDiv.outerHTML}
-            <a href="" target="_blank" class="btn">Visit Show Homepage</a>
+            <a href="${show.homepage}" target="_blank" class="btn">Visit Show Homepage</a>
           </div>
         </div>
         <div class="details-bottom">
