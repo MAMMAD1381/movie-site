@@ -30,4 +30,15 @@ some pictures of app:
 
 
 # tvshows
-[movie page](./github-images/tvShows.png)
+![movie page](./github-images/tvShows.png)
+
+## search in tv shows
+
+![movie page](./github-images/searchTvShows.png)
+
+## tv show details
+
+![movie page](./github-images/tvShowsDetails.png)
+
+![movie page](./github-images/tvShowsDetails2.png)
+
